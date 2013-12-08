@@ -56,8 +56,14 @@ public class MyFirstCameraSkeletonActivity extends Activity {
 		@Override
 		public void onClick(View v) {
 			// TODO Auto-generated method stub
-			
-		}
+            Intent intentView = new Intent();
+            // Indicarea clasei ce va raspunde intentului
+            intentView.setClass(getApplicationContext(), ViewActivity.class);
+            // Stocarea adresei pozei de afisat sub denumirea <<imageUri>>
+            intentView.putExtra("imageUri", originalFileUri);
+            // Pornirea activitatii
+            startActivity(intentView);
+        }
 	};
 	
 	View.OnClickListener editPicListener = new View.OnClickListener() {
