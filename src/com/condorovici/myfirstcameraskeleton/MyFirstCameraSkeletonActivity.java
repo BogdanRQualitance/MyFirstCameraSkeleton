@@ -74,55 +74,58 @@ public class MyFirstCameraSkeletonActivity extends Activity {
 		
 		@Override
 		public void onClick(View v) {
-			// TODO Auto-generated method stub
-            Bitmap origBmp, imageBmpMutable;
-            // Decodarea imaginii din fisier
-            origBmp = BitmapFactory.decodeFile(originalFileUri.getPath());
-            // Crearea unei copii mutable a Bitmap-ului
-            imageBmpMutable = origBmp.copy(origBmp.getConfig(), true);
-            // Stergerea obiectului initial
-            origBmp.recycle();
-            // Dimensiunile imaginii
-            int width = imageBmpMutable.getWidth();
-            int height = imageBmpMutable.getHeight();
-            // Vectorul ce va contine valorile pixelilor
-            int[] pixArr = new int[width * height];
-            // Stream-ul corespunzator fisierului de iesire
-            FileOutputStream outStream = null;
-
-            // Obtinerea pixelilor
-            imageBmpMutable.getPixels(pixArr, 0, width, 0, 0, width, height);
-            int R, G, B;
-            int index = 0;
-            // parcurgerea imaginii
-            for(int y = 0; y < height; y++)
-            {
-                for(int x = 0; x < width; x++)
-                {
-                    // extragerea planelor de culoare
-                    int r = (pixArr[index] >> 16) & 0xff;
-                    int g = (pixArr[index] >> 8) & 0xff;
-                    int b = pixArr[index] & 0xff;
-                    R = r;G = 127;B = 127;
-                    // reimpachetarea valorilor modificate
-                    pixArr[index] = 0xff000000 | (R<<16) | (G<<8) | B;
-                    index = index + 1;
-                }
-            }
-            // actualizarea Bitmap-ului cu noile valorile ale pixelilor
-            imageBmpMutable.setPixels(pixArr, 0, width, 0, 0, width, height);
-            // Salvarea fisierului
-            try {
-                outStream = new FileOutputStream(originalFile);
-                imageBmpMutable.compress(Bitmap.CompressFormat.JPEG, 100, outStream);
-            } catch (FileNotFoundException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-
+            editPhoto();
         }
 	};
-	
+
+    private void editPhoto() {
+        // TODO Auto-generated method stub
+        Bitmap origBmp, imageBmpMutable;
+        // Decodarea imaginii din fisier
+        origBmp = BitmapFactory.decodeFile(originalFileUri.getPath());
+        // Crearea unei copii mutable a Bitmap-ului
+        imageBmpMutable = origBmp.copy(origBmp.getConfig(), true);
+        // Stergerea obiectului initial
+        origBmp.recycle();
+        // Dimensiunile imaginii
+        int width = imageBmpMutable.getWidth();
+        int height = imageBmpMutable.getHeight();
+        // Vectorul ce va contine valorile pixelilor
+        int[] pixArr = new int[width * height];
+        // Stream-ul corespunzator fisierului de iesire
+        FileOutputStream outStream = null;
+
+        // Obtinerea pixelilor
+        imageBmpMutable.getPixels(pixArr, 0, width, 0, 0, width, height);
+        int R, G, B;
+        int index = 0;
+        // parcurgerea imaginii
+        for(int y = 0; y < height; y++)
+        {
+            for(int x = 0; x < width; x++)
+            {
+                // extragerea planelor de culoare
+                int r = (pixArr[index] >> 16) & 0xff;
+                int g = (pixArr[index] >> 8) & 0xff;
+                int b = pixArr[index] & 0xff;
+                R = r;G = 127;B = 127;
+                // reimpachetarea valorilor modificate
+                pixArr[index] = 0xff000000 | (R<<16) | (G<<8) | B;
+                index = index + 1;
+            }
+        }
+        // actualizarea Bitmap-ului cu noile valorile ale pixelilor
+        imageBmpMutable.setPixels(pixArr, 0, width, 0, 0, width, height);
+        // Salvarea fisierului
+        try {
+            outStream = new FileOutputStream(originalFile);
+            imageBmpMutable.compress(Bitmap.CompressFormat.JPEG, 100, outStream);
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
