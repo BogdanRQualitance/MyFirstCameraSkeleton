@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+    <Button 
+    	android:id="@+id/btn_takePicDefault"
+    	android:layout_height="fill_parent"
+    	android:layout_width="fill_parent"
+    	android:layout_weight="1"
+    	android:text="@string/btn_takePicDefault">
+    </Button>
+    <Button 
+    	android:id="@+id/btn_takePicCustom"
+    	android:layout_height="fill_parent"
+    	android:layout_width="fill_parent"
+    	android:layout_weight="1"
+    	android:text="@string/btn_takePicCustom">
+    </Button>
+    <Button 
+    	android:id="@+id/btn_viewPic"
+    	android:layout_height="fill_parent"
+    	android:layout_width="fill_parent"
+    	android:layout_weight="1"
+    	android:text="@string/btn_viewPic">
+    </Button>
+    <Button 
+    	android:id="@+id/btn_editPic"
+    	android:layout_height="fill_parent"
+    	android:layout_width="fill_parent"
+    	android:layout_weight="1"
+    	android:text="@string/btn_editPic">
+    </Button>
+</LinearLayout>

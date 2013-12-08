@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MyFirstCamera</string>
+    <string name="btn_takePicDefault">Take Picture (default)</string>
+    <string name="btn_takePicCustom">Take Picture (custom)</string>
+    <string name="btn_viewPic">View Picture</string>
+    <string name="btn_editPic">Edit Picture</string>
+    <string name="btn_viewBack">Back</string>
+</resources>
