@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import java.io.File;
 
@@ -33,8 +34,12 @@ public class MyFirstCameraSkeletonActivity extends Activity {
 		@Override
 		public void onClick(View v) {
 			// TODO Auto-generated method stub
-			
-		}
+            intentDefaultCamera = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+            // Adaugarea locatiei in care se doreste salvarea imaginii
+            intentDefaultCamera.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, originalFileUri);
+            // Lansarea aplicatiei ce raspunde la intent
+            startActivityForResult(intentDefaultCamera, CAMERA_REQUEST);
+        }
 	};
 	
 	View.OnClickListener takePicCustomListener = new View.OnClickListener() {
@@ -80,4 +85,20 @@ public class MyFirstCameraSkeletonActivity extends Activity {
         viewPic.setOnClickListener(viewPicListener);
         editPic.setOnClickListener(editPicListener);
     }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent){
+        super.onActivityResult(requestCode, resultCode, intent);
+
+        // se verifica daca metoda a fost apelata datorita intoarcerii unui rezultat
+        // in urma intentului de captura a pozei
+        if(requestCode == CAMERA_REQUEST)
+            // se verifica daca rezultatul s-a obtinut cu succes
+            if(resultCode == RESULT_OK)
+            {
+                Toast alertBox;
+                alertBox = Toast.makeText(getApplicationContext(), "ImageCaptured", 1);
+                alertBox.show();
+            }
+    }
+
 }
