@@ -24,22 +24,25 @@ public class ViewActivity extends Activity {
         btnBack = (Button)findViewById(R.id.btn_viewBack);
         imageView = (ImageView)findViewById(R.id.ImageView);
         // Bitmap-ul ce va contine imaginea de afisat
-        Bitmap displayPic;
         // Intentul ce a fost folosit pentru deschiderea activitatii
-        Intent callingIntent = new Intent();
+        Intent callingIntent;
         // URI-ul corespunator fisierului de afisat
-        Uri imageFileUri;
 
         // Obtinerea Intent-ului de afisat
         callingIntent = getIntent();
         // Extragerea datelor de tip Extras
         Bundle extras = callingIntent.getExtras();
         // Extragerea adresei fisierului de afisat
-        imageFileUri = (Uri)extras.get("imageUri");
-
+        Uri imageFileUri = null;
+        if (extras != null) {
+            imageFileUri = (Uri) extras.get("imageUri");
+        }
 
         // Decodarea fisierului intr-un obiect de tipul Bitmap
-        displayPic = BitmapFactory.decodeFile(imageFileUri.getPath());
+        Bitmap displayPic = null;
+        if (imageFileUri != null) {
+            displayPic = BitmapFactory.decodeFile(imageFileUri.getPath());
+        }
         // Afisarea Bitmap-ului
         imageView.setImageBitmap(displayPic);
 

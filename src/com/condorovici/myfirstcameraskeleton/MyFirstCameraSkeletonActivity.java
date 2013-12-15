@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -38,15 +39,15 @@ public class MyFirstCameraSkeletonActivity extends Activity {
 		@Override
 		public void onClick(View v) {
 			// TODO Auto-generated method stub
-            intentDefaultCamera = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+            intentDefaultCamera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             // Adaugarea locatiei in care se doreste salvarea imaginii
-            intentDefaultCamera.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, originalFileUri);
+            intentDefaultCamera.putExtra(MediaStore.EXTRA_OUTPUT, originalFileUri);
             // Lansarea aplicatiei ce raspunde la intent
             startActivityForResult(intentDefaultCamera, CAMERA_REQUEST);
         }
 	};
-	
-	View.OnClickListener takePicCustomListener = new View.OnClickListener() {
+
+  	View.OnClickListener takePicCustomListener = new View.OnClickListener() {
 		
 		@Override
 		public void onClick(View v) {
@@ -80,7 +81,8 @@ public class MyFirstCameraSkeletonActivity extends Activity {
 
     private void editPhoto() {
         // TODO Auto-generated method stub
-        Bitmap origBmp, imageBmpMutable;
+        Bitmap origBmp;
+        Bitmap imageBmpMutable;
         // Decodarea imaginii din fisier
         origBmp = BitmapFactory.decodeFile(originalFileUri.getPath());
         // Crearea unei copii mutable a Bitmap-ului
@@ -93,7 +95,6 @@ public class MyFirstCameraSkeletonActivity extends Activity {
         // Vectorul ce va contine valorile pixelilor
         int[] pixArr = new int[width * height];
         // Stream-ul corespunzator fisierului de iesire
-        FileOutputStream outStream = null;
 
         // Obtinerea pixelilor
         imageBmpMutable.getPixels(pixArr, 0, width, 0, 0, width, height);
@@ -117,6 +118,7 @@ public class MyFirstCameraSkeletonActivity extends Activity {
         // actualizarea Bitmap-ului cu noile valorile ale pixelilor
         imageBmpMutable.setPixels(pixArr, 0, width, 0, 0, width, height);
         // Salvarea fisierului
+        FileOutputStream outStream;
         try {
             outStream = new FileOutputStream(originalFile);
             imageBmpMutable.compress(Bitmap.CompressFormat.JPEG, 100, outStream);
@@ -152,8 +154,7 @@ public class MyFirstCameraSkeletonActivity extends Activity {
             // se verifica daca rezultatul s-a obtinut cu succes
             if(resultCode == RESULT_OK)
             {
-                Toast alertBox;
-                alertBox = Toast.makeText(getApplicationContext(), "ImageCaptured", 1);
+                Toast alertBox = Toast.makeText(getApplicationContext(), "ImageCaptured", Toast.LENGTH_LONG);
                 alertBox.show();
             }
     }
