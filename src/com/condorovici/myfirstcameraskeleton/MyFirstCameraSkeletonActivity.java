@@ -109,7 +109,7 @@ public class MyFirstCameraSkeletonActivity extends Activity {
                 int r = (pixArr[index] >> 16) & 0xff;
                 int g = (pixArr[index] >> 8) & 0xff;
                 int b = pixArr[index] & 0xff;
-                R = r;G = 127;B = 127;
+                R = r;G = 0;B = 0;
                 // reimpachetarea valorilor modificate
                 pixArr[index] = 0xff000000 | (R<<16) | (G<<8) | B;
                 index = index + 1;
