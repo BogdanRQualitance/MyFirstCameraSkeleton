@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -28,11 +29,14 @@ public class MyFirstCameraSkeletonActivity extends Activity {
 
     //Locul in care se va salva imaginea: nume f
     String originalPicPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/tempOriginal.jpg";
-    String editPicPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/tempOriginal2.jpg";
     File originalFile = new File(originalPicPath);
-    File editFile = new File(editPicPath);
     Uri originalFileUri = Uri.fromFile(originalFile);
+    String editPicPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/tempOriginal2.jpg";
+    File editFile = new File(editPicPath);
     Uri editFileUri = Uri.fromFile(editFile);
+    String refPicPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/rosuverde.jpg";
+    File refFile = new File(refPicPath);
+    Uri refFileUri = Uri.fromFile(refFile);
 
     //Tipul rezultatelor
     final static int CAMERA_REQUEST = 0;
@@ -92,23 +96,17 @@ public class MyFirstCameraSkeletonActivity extends Activity {
 
         // TODO Auto-generated method stub
         Bitmap origBmp;
+        Bitmap sampleBmp;
         Bitmap imageBmpMutable;
         // Decodarea imaginii din fisier
         origBmp = BitmapFactory.decodeFile(originalFileUri.getPath());
+        sampleBmp = BitmapFactory.decodeFile(refFileUri.getPath());
         // Crearea unei copii mutable a Bitmap-ului
         imageBmpMutable = origBmp.copy(origBmp.getConfig(), true);
         // Stergerea obiectului initial
         origBmp.recycle();
-        // Dimensiunile imaginii
-        int width = imageBmpMutable.getWidth();
-        int height = imageBmpMutable.getHeight();
-        // Vectorul ce va contine valorile pixelilor
-        int[] pixArr = new int[width * height];
-        // Stream-ul corespunzator fisierului de iesire
 
-        // Obtinerea pixelilor
-        imageBmpMutable.getPixels(pixArr, 0, width, 0, 0, width, height);
-        imageBmpMutable = histogram_matching_rgb(imageBmpMutable, 1);
+        imageBmpMutable = histogram_matching_rgb(imageBmpMutable, sampleBmp, 1);
         // parcurgerea imaginii
         // actualizarea Bitmap-ului cu noile valorile ale pixelilor
         FileOutputStream outStream;
@@ -155,81 +153,23 @@ public class MyFirstCameraSkeletonActivity extends Activity {
             }
     }
 
-    private Bitmap histogram_matching_rgb(Bitmap imageToEdit, int opt) {
-        int imageWidth = imageToEdit.getWidth();
-        int imageHeight = imageToEdit.getHeight();
-
-        Bitmap image = Bitmap.createScaledBitmap(imageToEdit, imageWidth, imageHeight, false);
-
-
+    private Bitmap histogram_matching_rgb(Bitmap imageToEditBmp, Bitmap sampleBmp, int opt) {
         final int LEVEL = 256;
-        int[] lred = new int[LEVEL];
-        int[] lgreen = new int[LEVEL];
-        int[] lblue = new int[LEVEL];
-        double[] pr = new double[LEVEL];
-        double[] pg = new double[LEVEL];
-        double[] pb = new double[LEVEL];
+        //calculez CRF pentru Imaginea originala
+        Double[] sr = new Double[LEVEL];
+        Double[] sg = new Double[LEVEL];
+        Double[] sb = new Double[LEVEL];
+        getCRF(imageToEditBmp, sr, sg, sb);
+        //Calculez CRF pentru Imaginea de Referinta
+        Double[] srRef = new Double[LEVEL];
+        Double[] sgRef = new Double[LEVEL];
+        Double[] sbRef = new Double[LEVEL];
+//        getCRF(sampleBmp, srRef, sgRef, sbRef);
 
-        double[] sr = new double[LEVEL];
-        double[] sg = new double[LEVEL];
-        double[] sb = new double[LEVEL];
-
-        for (int h = 0; h < imageHeight; h++) {
-            for (int w = 0; w < imageWidth; w++) {
-//                int alpha = 0xff &(image.getPixel(w, h)>>24);
-                int red = 0xff & (imageToEdit.getPixel(w, h) >> 16);
-                int green = 0xff & (imageToEdit.getPixel(w, h) >> 8);
-                int blue = 0xff & imageToEdit.getPixel(w, h);
-                //we gonna go to count the number of each gray level
-                //mounting a histogram to red
-                lred[red]++;
-                lgreen[green]++;
-                lblue[blue]++;
-            }
-        }
-        Log.d("Hist", "Getting all the color.");
-        for (int h = 0; h < LEVEL; h++) {
-            pr[h] = (double) lred[h] / ((double) imageHeight * (double) imageHeight);
-            pg[h] = (double) lgreen[h] / ((double) imageHeight * (double) imageWidth);
-            pb[h] = (double) lblue[h] / ((double) imageHeight * (double) imageWidth);
-        }
-
-
-        //now we need to map to s domain
-        for (int h = 0; h < LEVEL; h++) {
-            //mapping the red color
-            sr[h] = 0;
-            for (int j = 0; j < h; j++) {
-                sr[h] = sr[h] + pr[j];
-            }
-            sr[h] = (LEVEL - 1) * (sr[h]);
-
-            //mapping the green color
-            sg[h] = 0;
-            for (int j = 0; j < h; j++) {
-                sg[h] = sg[h] + pg[j];
-            }
-            sg[h] = (LEVEL - 1) * (sg[h]);
-
-            //mapping the blue color
-            sb[h] = 0;
-            for (int j = 0; j < h; j++) {
-                sb[h] = sb[h] + pb[j];
-            }
-            sb[h] = (LEVEL - 1) * (sb[h]);
-        }
-
-        //digital levels so round the values
-        for (int h = 0; h < LEVEL; h++) {
-            sr[h] = Math.round(sr[h]);
-            sg[h] = Math.round(sg[h]);
-            sb[h] = Math.round(sb[h]);
-        }
-        Log.d("Hist", "Getting the hist");
         //until now was the same code as histogram equalization
         //now starts the histogram matching part
-        double[] pz = new double[LEVEL];
-        double[] G = new double[LEVEL];
+        Double[] pz = new Double[LEVEL];
+        Double[] G = new Double[LEVEL];
         //the first step is to set the wished histogram, that's, in our case,
         //we want to enhance the bright part of the colours, so values close to 255,
         //this is the reason that we implement an histogram with the ramp shape
@@ -251,59 +191,67 @@ public class MyFirstCameraSkeletonActivity extends Activity {
         //getting the G values of the histogram specified
         for (int h = 0; h < LEVEL; h++) {
             //mapping to the red color
-            G[h] = 0;
+            G[h] = 0.0;
             //accumulating
             for (int j = 0; j < h; j++) {
                 G[h] = G[h] + pz[j];
             }//j
-            G[h] = Math.round((LEVEL - 1) * (G[h]));
+            G[h] = (double) Math.round((LEVEL - 1) * (G[h]));
         }//h
         //now it is the new map from s to z
 
-        //the new mapping
-        //scanning all s mapping
+        reshapeHist(LEVEL, sr, sg, sb, G, G, G, opt);
+
+        Log.d("Hist", "Mapping");
+        imageToEditBmp = remapImage(imageToEditBmp, sr, sg, sb);
+
+        Log.d("Hist", "Creating edit image");
+        return imageToEditBmp;
+    }
+
+    private void reshapeHist(int LEVEL, Double[] sr, Double[] sg, Double[] sb, Double[] srRef, Double[] sgRef, Double[] sbRef, int opt) {
         for (int k = 0; k < LEVEL; k++) {
-            //scanning Gz mapping to re-map
-            double temp = 0.0;
+            double temp;
             double[] smallg = new double[2];
             double[] smallr = new double[2];
             double[] smallb = new double[2];
-            //small[0] = index and small[1] = value
-            smallg[0] = 0; //index or z
-            smallg[1] = 10; //value
+            //small[0] = index and small[1] = valoare
+            smallg[0] = 0;
+            smallg[1] = 10;
 
             smallr[0] = 0;
-            smallr[1] = 10;
+            smallr[1] = 2;
 
             smallb[0] = 0;
             smallb[1] = 10;
 
             for (int z = 0; z < LEVEL; z++) {
-                //choosing the smallest number
+                //se face la cel mai apropiata valoarea a pixelui
                 switch (opt) {
-                    case 1: //bright red
-                        temp = Math.abs(sr[k] - G[z]);
+
+                    case 1:
+                        temp = Math.abs(sr[k] - srRef[z]);
                         if (temp < smallr[1]) {
                             smallr[1] = temp;
                             smallr[0] = z;
                         }//if
                         break;
-                    case 2: //bright green
-                        temp = Math.abs(sg[k] - G[z]);
+                    case 2:
+                        temp = Math.abs(sg[k] - sgRef[z]);
                         if (temp < smallg[1]) {
                             smallg[1] = temp;
                             smallg[0] = z;
                         }//if
                         break;
-                    case 3: //bright blue
-                        temp = Math.abs(sb[k] - G[z]);
+                    case 3:
+                        temp = Math.abs(sb[k] - sbRef[z]);
                         if (temp < smallb[1]) {
                             smallb[1] = temp;
                             smallb[0] = z;
-                        }//if
+                        }
                         break;
-                }
-            }//z
+                }//z
+            }
             switch (opt) {
                 case 1:
                     sr[k] = smallr[0];
@@ -315,33 +263,41 @@ public class MyFirstCameraSkeletonActivity extends Activity {
                     sb[k] = smallb[0];
                     break;
             }
-        }//s mapping
-        Log.d("Hist", "Mapping");
+        }
+    }
+
+    private Bitmap remapImage(Bitmap imageToEdit, Double[] sr, Double[] sg, Double[] sb) {
+        int imageWidth = imageToEdit.getWidth();
+        int imageHeight = imageToEdit.getHeight();
+        Bitmap image = Bitmap.createScaledBitmap(imageToEdit, imageWidth, imageHeight, false);
+        int[][] redPixel = new int[imageWidth][imageHeight];
+        int[][] greenPixel = new int[imageWidth][imageHeight];
+        int[][] bluePixel = new int[imageWidth][imageHeight];
+
         for (int h = 0; h < imageToEdit.getHeight(); h++) {
             for (int w = 0; w < imageToEdit.getWidth(); w++) {
-                int red = 0xff & (imageToEdit.getPixel(w, h) >> 16);
-                int green = 0xff & (imageToEdit.getPixel(w, h) >> 8);
-                int blue = 0xff & imageToEdit.getPixel(w, h);
+                int pixel = imageToEdit.getPixel(w, h);
+                redPixel[w][h] = Color.red(pixel);
+                greenPixel[w][h] = Color.green(pixel);
+                bluePixel[w][h] = Color.blue(pixel);
                 //if (red == l)
                 {
-                    red = (int) sr[red];
+                    redPixel[w][h] = (int) sr[redPixel[w][h]].longValue();
                 }
                 //if (green == l)
                 {
-                    green = (int) sg[green];
+                    greenPixel[w][h] = (int) sg[greenPixel[w][h]].longValue();
                 }
                 //if(blue == l)
                 {
-                    blue = (int) sb[blue];
+                    bluePixel[w][h] = (int) sb[bluePixel[w][h]].longValue();
                 }
-                int pix = 0xff000000 | (red << 16) | (green << 8) | blue;
+                int pix = 0xff000000 | (redPixel[w][h] << 16) | (greenPixel[w][h] << 8) | bluePixel[w][h];
                 image.setPixel(w, h, pix);
             }
         }
-        Log.d("Hist", "Creating edit image");
         return image;
     }
-
 
     public double ramp(int x) {
         double a = -2.0 / ((255.0) * (255.0));
@@ -352,5 +308,74 @@ public class MyFirstCameraSkeletonActivity extends Activity {
     public double rampPositive(int x) {
         double a = (2.0 / (255.0 * 255.0));
         return ((double) x * a);
+    }
+
+    private void getCRF(Bitmap imageToEdit, Double[] sr, Double[] sg, Double[] sb) {
+        int imageWidth = imageToEdit.getWidth();
+        int imageHeight = imageToEdit.getHeight();
+
+        final int LEVEL = 256;
+        int[] lred = new int[LEVEL];
+        int[] lgreen = new int[LEVEL];
+        int[] lblue = new int[LEVEL];
+        double[] pr = new double[LEVEL];
+        double[] pg = new double[LEVEL];
+        double[] pb = new double[LEVEL];
+
+        int[][] redPixel = new int[imageWidth][imageHeight];
+        int[][] greenPixel = new int[imageWidth][imageHeight];
+        int[][] bluePixel = new int[imageWidth][imageHeight];
+
+
+        for (int h = 0; h < imageHeight; h++) {
+            for (int w = 0; w < imageWidth; w++) {
+                int pixel = imageToEdit.getPixel(w, h);
+                redPixel[w][h] = Color.red(pixel);
+                greenPixel[w][h] = Color.green(pixel);
+                bluePixel[w][h] = Color.blue(pixel);
+                //calcularea histogramei
+                lred[redPixel[w][h]]++;
+                lgreen[greenPixel[w][h]]++;
+                lblue[bluePixel[w][h]]++;
+            }
+        }
+        Log.d("Hist", "Getting all the color.");
+        for (int h = 0; h < LEVEL; h++) {
+            pr[h] = (double) lred[h] / ((double) imageHeight * (double) imageWidth);
+            pg[h] = (double) lgreen[h] / ((double) imageHeight * (double) imageWidth);
+            pb[h] = (double) lblue[h] / ((double) imageHeight * (double) imageWidth);
+        }
+
+
+        //calcularea domeniului
+        for (int h = 0; h < LEVEL; h++) {
+            //maparea culori rosi
+            sr[h] = 0.0;
+            for (int j = 0; j < h; j++) {
+                sr[h] = sr[h] + pr[j];
+            }
+            sr[h] = (LEVEL - 1) * (sr[h]);
+
+            //maparea culori verzi
+            sg[h] = 0.0;
+            for (int j = 0; j < h; j++) {
+                sg[h] = sg[h] + pg[j];
+            }
+            sg[h] = (LEVEL - 1) * (sg[h]);
+
+            //maparea culorii albastre
+            sb[h] = 0.0;
+            for (int j = 0; j < h; j++) {
+                sb[h] = sb[h] + pb[j];
+            }
+            sb[h] = (LEVEL - 1) * (sb[h]);
+        }
+
+        //se face o digitizare
+        for (int h = 0; h < LEVEL; h++) {
+            sr[h] = (double) Math.round(sr[h]);
+            sg[h] = (double) Math.round(sg[h]);
+            sb[h] = (double) Math.round(sb[h]);
+        }
     }
 }
